@@ -77,7 +77,7 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes []*CellType,styles []*Style, height float64, widths []float64) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -92,10 +92,15 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	}
 	sb.styleIds = append(sb.styleIds, []int{})
 	row := sheet.AddRow()
+	row.SetHeight(height)
 	if count := row.WriteSlice(&headers, -1); count != len(headers) {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
 		return errors.New("failed to write headers")
+	}
+	for i, cell:=range row.Cells  {
+		cell.SetStyle(styles[i])
+		sheet.Cols[i].Width = widths[i]
 	}
 	for i, cellType := range cellTypes {
 		var cellStyleIndex int
